@@ -1,7 +1,35 @@
 import csv
 import re
+from functools import wraps
+from datetime import datetime
 
 
+def logger(path):
+    def __logger(old_function):
+        @wraps(old_function)
+        def new_function(*args, **kwargs):
+            date_now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            old_function_name = old_function.__name__
+            result = old_function(*args, **kwargs)
+
+            log_entry = (
+                f"{date_now} | "
+                f"Имя функции: {old_function_name} | "
+                f"Аргументы: {args} {kwargs} | "
+                f"Возвращено: {result}\n"
+            )
+
+            with open(path, mode='a', encoding='utf-8') as f:
+                f.write(log_entry)
+
+            return result
+
+        return new_function
+
+    return __logger
+
+
+@logger("log.log")
 def process_full_name(contacts_list):
     """
     Функция приводит ФИО к нужному виду
@@ -19,6 +47,7 @@ def process_full_name(contacts_list):
     return update_full_name_list
 
 
+@logger("log.log")
 def process_phone_number(contacts_list, subst=r"+7(\2)\3-\4-\5 \6\7"):
     """
     Функция приводит номер к нужному виду согласно шаблону
@@ -37,6 +66,7 @@ def process_phone_number(contacts_list, subst=r"+7(\2)\3-\4-\5 \6\7"):
     return update_phone_number_list
 
 
+@logger("log.log")
 def merge_duplicates(contacts_list):
     """
     Функция объединяет дубликаты в одну запись
